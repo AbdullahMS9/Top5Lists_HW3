@@ -17,7 +17,8 @@ export const GlobalStoreActionType = {
     CLOSE_CURRENT_LIST: "CLOSE_CURRENT_LIST",
     LOAD_ID_NAME_PAIRS: "LOAD_ID_NAME_PAIRS",
     SET_CURRENT_LIST: "SET_CURRENT_LIST",
-    SET_LIST_NAME_EDIT_ACTIVE: "SET_LIST_NAME_EDIT_ACTIVE"
+    SET_LIST_NAME_EDIT_ACTIVE: "SET_LIST_NAME_EDIT_ACTIVE",
+    ADD_LIST: "ADD_LIST"
 }
 
 // WE'LL NEED THIS TO PROCESS TRANSACTIONS
@@ -95,6 +96,16 @@ export const useGlobalStore = () => {
                     isItemEditActive: false,
                     listMarkedForDeletion: null
                 });
+            }
+
+            case GlobalStoreActionType.ADD_LIST: {
+                return setStore({
+                    newListCounter: store.newListCounter+1,
+                    idNamePairs: payload.idNamePairs,
+                    currentList: payload.top5List,
+                    isListNameEditActive: false,
+                    isItemEditActive: false,
+                    listMarkedForDeletion: null})
             }
             default:
                 return store;
@@ -222,6 +233,39 @@ export const useGlobalStore = () => {
         }
         asyncUpdateCurrentList();
     }
+
+    
+    store.addList = function () {
+        let newList = {
+            "name": "Untitled"+ store.newListCounter,
+            "items": ["?", "?", "?", "?", "?"]
+        }
+
+        async function asyncAddList(){
+            let response = await api.createTop5List(newList);
+            if(response.data.success) {
+                //let top5List = response.data.top5List;
+                let temp = {
+                    _id: response.data.top5List["_id"],
+                    name: response.data.top5List["name"]
+                }
+                let tempArr = store.idNamePairs;
+                tempArr.push(temp);
+                storeReducer({
+                    type: GlobalStoreActionType.ADD_LIST,
+                    payload: {
+                        idNamePairs: tempArr,
+                        newListCounter: store.newListCounter + 1,
+                        top5List: null,
+                    }
+                });
+                store.setCurrentList(temp["_id"]);
+            }
+        }
+        asyncAddList();
+    }
+
+
     store.undo = function () {
         tps.undoTransaction();
     }
