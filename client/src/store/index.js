@@ -63,7 +63,7 @@ export const useGlobalStore = () => {
                     isListNameEditActive: false,
                     isItemEditActive: false,
                     listMarkedForDeletion: null
-                })
+                });
             }
             // GET ALL THE LISTS SO WE CAN PRESENT THEM
             case GlobalStoreActionType.LOAD_ID_NAME_PAIRS: {
@@ -103,7 +103,7 @@ export const useGlobalStore = () => {
                 return setStore({
                     idNamePairs: payload.idNamePairs,
                     currentList: payload.top5List,
-                    newListCounter: store.newListCounter+1,
+                    newListCounter: store.newListCounter,
                     isListNameEditActive: false,
                     isItemEditActive: false,
                     listMarkedForDeletion: null
@@ -264,12 +264,12 @@ export const useGlobalStore = () => {
                 }
                 let tempArr = store.idNamePairs;
                 tempArr.push(temp);
+                store.newListCounter += 1;
                 storeReducer({
                     type: GlobalStoreActionType.ADD_LIST,
                     payload: {
                         idNamePairs: tempArr,
-                        newListCounter: store.newListCounter + 1,
-                        top5List: null,
+                        top5List: store.top5List,
                     }
                 });
                 store.setCurrentList(temp["_id"]);
@@ -279,12 +279,11 @@ export const useGlobalStore = () => {
     }
 
     store.deleteList = function (key) {
+        store.showDeleteListModal();
         async function asyncDeleteList(key) {
             let response = await api.getTop5ListById(key);
             if (response.data.success) {
                 let top5List = response.data.top5List;
-                console.log(top5List);
-                store.showDeleteListModal();
                 storeReducer({
                     type: GlobalStoreActionType.SET_DELETE_MODAL,
                     payload: top5List
@@ -296,6 +295,25 @@ export const useGlobalStore = () => {
 
     store.deleteMarkedList = function () {
         store.hideDeleteListModal();
+        async function asyncDeleteMarkedList() {
+            let response = await api.deleteTop5ListById(store.currentList._id);
+            if (response.data.success) {
+                await api.getTop5ListPairs().then((response)=> {
+                    if (response.data.success) {
+                        storeReducer({
+                            type: GlobalStoreActionType.DELETE_MARKED_LIST,
+                            payload: {
+                                idNamePairs: response.data.idNamePairs,
+                                top5List: null
+                            }
+                        });
+                    }
+                    store.loadIdNamePairs();
+                });
+            }
+            
+        }
+        asyncDeleteMarkedList();
     }
 
     //UNDO REDO FUNCTIONS
