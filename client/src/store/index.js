@@ -18,7 +18,8 @@ export const GlobalStoreActionType = {
     LOAD_ID_NAME_PAIRS: "LOAD_ID_NAME_PAIRS",
     SET_CURRENT_LIST: "SET_CURRENT_LIST",
     SET_LIST_NAME_EDIT_ACTIVE: "SET_LIST_NAME_EDIT_ACTIVE",
-    ADD_LIST: "ADD_LIST"
+    ADD_LIST: "ADD_LIST",
+    SET_DELETE_MODAL: "SET_DELETE_MODAL"
 }
 
 // WE'LL NEED THIS TO PROCESS TRANSACTIONS
@@ -100,12 +101,24 @@ export const useGlobalStore = () => {
 
             case GlobalStoreActionType.ADD_LIST: {
                 return setStore({
-                    newListCounter: store.newListCounter+1,
                     idNamePairs: payload.idNamePairs,
                     currentList: payload.top5List,
+                    newListCounter: store.newListCounter+1,
                     isListNameEditActive: false,
                     isItemEditActive: false,
-                    listMarkedForDeletion: null})
+                    listMarkedForDeletion: null
+                });
+            }
+
+            case GlobalStoreActionType.SET_DELETE_MODAL: {
+                return setStore({
+                    idNamePairs: store.idNamePairs,
+                    currentList: payload,
+                    newListCounter: store.newListCounter,
+                    isListNameEditActive: false,
+                    isItemEditActive: false,
+                    listMarkedForDeletion: true
+                });
             }
             default:
                 return store;
@@ -265,12 +278,43 @@ export const useGlobalStore = () => {
         asyncAddList();
     }
 
+    store.deleteList = function (key) {
+        async function asyncDeleteList(key) {
+            let response = await api.getTop5ListById(key);
+            if (response.data.success) {
+                let top5List = response.data.top5List;
+                console.log(top5List);
+                store.showDeleteListModal();
+                storeReducer({
+                    type: GlobalStoreActionType.SET_DELETE_MODAL,
+                    payload: top5List
+                });
+            }
+        }
+        asyncDeleteList(key);
+    }
 
+    store.deleteMarkedList = function () {
+        store.hideDeleteListModal();
+    }
+
+    //UNDO REDO FUNCTIONS
     store.undo = function () {
         tps.undoTransaction();
     }
     store.redo = function () {
         tps.doTransaction();
+    }
+
+    //DISPLAY FOR DELETE MODALS
+    store.showDeleteListModal = function () {
+        let modal = document.getElementById("delete-modal");
+        modal.classList.add("is-visible");
+    }
+
+    store.hideDeleteListModal = function () {
+        let modal = document.getElementById("delete-modal");
+        modal.classList.remove("is-visible");
     }
 
     // THIS FUNCTION ENABLES THE PROCESS OF EDITING A LIST NAME

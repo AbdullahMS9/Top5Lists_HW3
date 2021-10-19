@@ -47,6 +47,10 @@ function ListCard(props) {
         }
     }
 
+    function handleListDeletion(ev){
+        store.deleteList(ev.target.id.substring("delete-list-".length));
+    }
+
     function handleUpdateText(event) {
         setText(event.target.value );
     }
@@ -76,6 +80,7 @@ function ListCard(props) {
                 type="button"
                 id={"delete-list-" + idNamePair._id}
                 className="list-card-button"
+                onClick = {handleListDeletion}
                 value={"\u2715"}
             />
             <input
