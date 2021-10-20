@@ -338,7 +338,7 @@ export const useGlobalStore = () => {
     store.addChangeItemTransaction = function (index, text) {
         let transaction = new ChangeItem_Transaction(store,index, store.currentList.items[index], text);
         tps.addTransaction(transaction);
-        store.updateCurrentList();//update tool bar for fool proof 
+        store.updateCurrentList();
     }
     store.changeItem =function(index,text){
         store.currentList.items[index] = text ;
