@@ -2,6 +2,7 @@ import { createContext, useState } from 'react'
 import jsTPS from '../common/jsTPS'
 import api from '../api'
 import MoveItem_Transaction from '../transactions/MoveItem_Transaction'
+import ChangeItem_Transaction from '../transactions/ChangeItem_Transaction'
 export const GlobalStoreContext = createContext({});
 /*
     This is our global data store. Note that it uses the Flux design pattern,
@@ -19,11 +20,12 @@ export const GlobalStoreActionType = {
     SET_CURRENT_LIST: "SET_CURRENT_LIST",
     SET_LIST_NAME_EDIT_ACTIVE: "SET_LIST_NAME_EDIT_ACTIVE",
     ADD_LIST: "ADD_LIST",
-    SET_DELETE_MODAL: "SET_DELETE_MODAL"
+    SET_DELETE_MODAL: "SET_DELETE_MODAL",
+    SET_ITEM_EDIT_ACTIVE: "SET_ITEM_EDIT_ACTIVE"
 }
 
 // WE'LL NEED THIS TO PROCESS TRANSACTIONS
-const tps = new jsTPS();
+export const tps = new jsTPS();
 
 // WITH THIS WE'RE MAKING OUR GLOBAL DATA STORE
 // AVAILABLE TO THE REST OF THE APPLICATION
@@ -120,6 +122,17 @@ export const useGlobalStore = () => {
                     listMarkedForDeletion: true
                 });
             }
+
+            case GlobalStoreActionType.SET_ITEM_EDIT_ACTIVE: {
+                return setStore({
+                    idNamePairs: store.idNamePairs,
+                    currentList: store.currentList,
+                    newListCounter: store.newListCounter,
+                    isListNameEditActive: false,
+                    isItemEditActive: true,
+                    listMarkedForDeletion: null
+                });
+            }
             default:
                 return store;
         }
@@ -163,6 +176,7 @@ export const useGlobalStore = () => {
 
     // THIS FUNCTION PROCESSES CLOSING THE CURRENTLY LOADED LIST
     store.closeCurrentList = function () {
+        tps.clearAllTransactions();
         storeReducer({
             type: GlobalStoreActionType.CLOSE_CURRENT_LIST,
             payload: {}
@@ -301,7 +315,6 @@ export const useGlobalStore = () => {
                 await api.getTop5ListPairs().then((response)=> {
                     if (response.data.success) {
                         storeReducer({
-                            type: GlobalStoreActionType.DELETE_MARKED_LIST,
                             payload: {
                                 idNamePairs: response.data.idNamePairs,
                                 top5List: null
@@ -311,10 +324,27 @@ export const useGlobalStore = () => {
                     store.loadIdNamePairs();
                 });
             }
-            
         }
         asyncDeleteMarkedList();
     }
+
+    store.setItemEditActive = function () {
+        storeReducer({
+            type: GlobalStoreActionType.SET_ITEM_EDIT_ACTIVE,
+            payload: store.currentList
+        });
+    }
+
+    store.addChangeItemTransaction = function (index, text) {
+        let transaction = new ChangeItem_Transaction(store,index, store.currentList.items[index], text);
+        tps.addTransaction(transaction);
+        store.updateCurrentList();//update tool bar for fool proof 
+    }
+    store.changeItem =function(index,text){
+        store.currentList.items[index] = text ;
+        store.updateCurrentList();
+    }
+
 
     //UNDO REDO FUNCTIONS
     store.undo = function () {
