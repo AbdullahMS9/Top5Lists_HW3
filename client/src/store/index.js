@@ -272,12 +272,9 @@ export const useGlobalStore = () => {
         async function asyncAddList(){
             let response = await api.createTop5List(newList);
             if(response.data.success) {
-                let temp = {
-                    _id: response.data.top5List["_id"],
-                    name: response.data.top5List["name"]
-                }
                 let tempArr = store.idNamePairs;
-                tempArr.push(temp);
+                tempArr.push({_id: response.data.top5List["_id"],
+                    name: response.data.top5List["name"]});
                 store.newListCounter += 1;
                 storeReducer({
                     type: GlobalStoreActionType.ADD_LIST,
@@ -286,7 +283,7 @@ export const useGlobalStore = () => {
                         top5List: store.top5List,
                     }
                 });
-                store.setCurrentList(temp["_id"]);
+                store.setCurrentList(response.data.top5List["_id"]);
             }
         }
         asyncAddList();
