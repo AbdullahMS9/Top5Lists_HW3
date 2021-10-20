@@ -115,11 +115,11 @@ export const useGlobalStore = () => {
             case GlobalStoreActionType.SET_DELETE_MODAL: {
                 return setStore({
                     idNamePairs: store.idNamePairs,
-                    currentList: payload,
+                    currentList: store.currentList,
                     newListCounter: store.newListCounter,
                     isListNameEditActive: false,
                     isItemEditActive: false,
-                    listMarkedForDeletion: true
+                    listMarkedForDeletion: payload
                 });
             }
 
@@ -272,7 +272,6 @@ export const useGlobalStore = () => {
         async function asyncAddList(){
             let response = await api.createTop5List(newList);
             if(response.data.success) {
-                //let top5List = response.data.top5List;
                 let temp = {
                     _id: response.data.top5List["_id"],
                     name: response.data.top5List["name"]
@@ -311,7 +310,7 @@ export const useGlobalStore = () => {
     store.deleteMarkedList = function () {
         store.hideDeleteListModal();
         async function asyncDeleteMarkedList() {
-            let response = await api.deleteTop5ListById(store.currentList._id);
+            let response = await api.deleteTop5ListById(store.listMarkedForDeletion._id);
             if (response.data.success) {
                 await api.getTop5ListPairs().then((response)=> {
                     if (response.data.success) {
