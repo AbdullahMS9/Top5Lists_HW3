@@ -172,6 +172,7 @@ export const useGlobalStore = () => {
             }
         }
         asyncChangeListName(id);
+        store.loadIdNamePairs();
     }
 
     // THIS FUNCTION PROCESSES CLOSING THE CURRENTLY LOADED LIST
@@ -317,7 +318,6 @@ export const useGlobalStore = () => {
                         storeReducer({
                             payload: {
                                 idNamePairs: response.data.idNamePairs,
-                                top5List: null
                             }
                         });
                     }
